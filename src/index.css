@@ -1,0 +1,80 @@
+@import 'tailwindcss';
+
+/* Design tokens. Tailwind v4 turns these into utilities (bg-surface, text-ink-400...).
+   Dark-first: BranchMap is a developer tool meant to sit beside an IDE. */
+@theme {
+  --color-canvas: #0a0e14;
+  --color-surface: #10151d;
+  --color-raised: #161d27;
+  --color-overlay: #1c2531;
+
+  --color-line: #222c3a;
+  --color-line-soft: #1a222d;
+
+  --color-ink: #e8edf5;
+  --color-ink-muted: #9aa8bd;
+  --color-ink-faint: #64748b;
+
+  --color-accent: #4c9aff;
+  --color-accent-soft: #1e3a63;
+  --color-success: #35c98b;
+  --color-warning: #e5b567;
+  --color-danger: #f2637e;
+
+  --font-sans: 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* A desktop app should not rubber-band or select chrome like a document. */
+    overscroll-behavior: none;
+    user-select: none;
+  }
+
+  /* Text the user will genuinely want to copy (commit SHAs, paths, diffs). */
+  .selectable {
+    user-select: text;
+  }
+}
+
+@layer components {
+  .panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+  }
+}
+
+/* Thin, unobtrusive scrollbars to match the desktop chrome. */
+@layer utilities {
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: var(--color-line);
+    border-radius: 4px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
