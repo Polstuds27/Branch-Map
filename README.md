@@ -1,6 +1,6 @@
 # BranchMap
 
-A local-first Windows desktop application that visually explains local Git repositories.
+A local-first Windows desktop application that visually explains local Git repositories. Developed Through AI-Assisted Development.
 
 BranchMap reads repositories directly from your disk. There is no cloud backend, no authentication, no telemetry, and nothing is ever uploaded.
 
