@@ -259,3 +259,63 @@ First milestone:
 After this milestone, implement the real commit history and branch comparison.
 
 Do not attempt to implement every planned feature before the application can launch.
+
+## 12. Reliability Pass — 2026-10-15
+
+### Baseline established
+- **31 Rust tests passing**, 1 ignored (Ollama stress test)
+- **0 frontend lint issues** (oxlint)
+- **TypeScript typecheck passes**
+- **Frontend production build succeeds**
+- **Windows installer builds** (`src-tauri/target/release/bundle/nsis/BranchMap_0.1.0_x64-setup.exe`)
+
+### AI intermittent failure investigation
+**Result: Not reproduced.**
+
+Tested scenarios (all passing):
+1. **Single inference** — works correctly
+2. **Sequential inferences (12 in a row)** — `stress_ai_explain_repeatedly` passes consistently
+3. **Concurrent request prevention** — `aiInFlight` guard blocks overlapping inferences
+4. **Ollama temporarily unavailable** — returns structured error, UI shows "Unavailable", Git features unaffected
+5. **Model missing** — returns actionable error with `ollama pull` hint
+6. **Slow inference** — 180s timeout enforced; 0.5B model typically 1–4s, 1.5B model 10–25s
+7. **Model switching mid-flight** — `aiSelectedModelRef` detects change, discards stale response
+8. **Dev vs packaged** — diagnostics include `packaged` flag; no behavioural difference observed
+
+**Diagnostics in place** (safe, bounded, no repo content):
+- `diag.rs` ring buffer (80 events) captures: request_id, timestamp, model, state transitions, duration, sanitised error category, packaged flag
+- `ai_diagnostics` Tauri command exposes events for debugging
+- Error categorisation strips URLs/secrets; only stable categories logged
+
+**No fixes applied** — no reproducible defect found. Diagnostics retained for future investigation.
+
+### Model comparison (qwen2.5:0.5b vs qwen2.5:1.5b)
+| Aspect | qwen2.5:0.5b | qwen2.5:1.5b |
+|--------|--------------|--------------|
+| Response time | ~3–4s | ~20–25s |
+| Fact fidelity | Low — hallucinates code changes, misstates file counts | High — correctly uses provided facts (branch names, line stats, file list) |
+| Direction accuracy | Correct (base → compare) | Correct (base → compare) |
+| Fact/inference labelling | Present (prompt-enforced) | Present (prompt-enforced) |
+| Truncation handling | Works (400 token budget) | Works (400 token budget) |
+
+**Recommendation:** Keep `qwen2.5:0.5b` as default for speed; 1.5B/3B selectable when installed. Do not auto-download.
+
+### Verified protections retained
+- Git repo path resolution + `resolvedFromSubdirectory`
+- `for-each-ref` formatting with literal `|` separator
+- `git log --format=VALUE` as single argument
+- Stable graph lane allocation (free list + parent reservations)
+- Safe parsing of paths containing `|`
+- Binary file diff handling
+- Root/merge commit comparison semantics
+- `merge-tree --write-tree` side effect documented in UI
+- Loopback-only Ollama, no auto-download, no external traffic
+- Tauri capabilities minimal
+
+### Remaining risks (explicitly recorded)
+- Intermittent AI failure not reproduced — if user encounters it, capture `ai_diagnostics` output and exact reproduction steps
+- Parallel Rust test isolation issues (temp dir collisions) — run with `--test-threads=1` for reliable results
+- 0.5B model weakness — treat output as review prompt, not authority
+
+### Next milestone
+Separate **UI redesign** — do not begin here. This reliability pass leaves the project stable for that work.
